@@ -458,12 +458,30 @@ h1,h2,.hcard-meta h3{text-wrap:balance}
 .mbook-hint.gone{opacity:0}
 body.mbook-lock{overflow:hidden}
 @media(max-width:760px){.mbook-nav{display:none}}
+.music-toggle{position:fixed;left:clamp(.9rem,3vw,1.6rem);bottom:clamp(.9rem,3vw,1.6rem);z-index:9700;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:rgba(20,16,12,.62);color:var(--cream);cursor:pointer;display:grid;place-items:center;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 14px 34px rgba(0,0,0,.4);transition:background .3s,border-color .3s,transform .3s}
+.music-toggle:hover{background:rgba(198,139,79,.25);border-color:var(--copper-2)}
+.music-toggle svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.music-toggle .mt-bar{transform-origin:center;transition:transform .35s var(--ease);opacity:.85}
+.music-toggle.muted .mt-bar{transform:scaleY(.25)!important;opacity:.45}
+.music-toggle:not(.muted) .mt-bar:nth-child(1){animation:mtbar 1.1s ease-in-out infinite}
+.music-toggle:not(.muted) .mt-bar:nth-child(2){animation:mtbar 1.1s ease-in-out infinite .18s}
+.music-toggle:not(.muted) .mt-bar:nth-child(3){animation:mtbar 1.1s ease-in-out infinite .34s}
+@keyframes mtbar{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+@media(prefers-reduced-motion:reduce){.music-toggle .mt-bar{animation:none!important}}
 </style>
 </head>
 <body>
 
 <div class="grain" aria-hidden="true"></div>
 <div class="reveal-img" aria-hidden="true"></div>
+
+<button class="music-toggle muted" id="musicToggle" aria-label="Putar musik" aria-pressed="false">
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <rect class="mt-bar" x="5" y="9" width="3" height="6" rx="1"></rect>
+    <rect class="mt-bar" x="10.5" y="5" width="3" height="14" rx="1"></rect>
+    <rect class="mt-bar" x="16" y="11" width="3" height="4" rx="1"></rect>
+  </svg>
+</button>
 
 <nav id="nav">
   <a href="#top" class="brand" aria-label="Sakapulo">
@@ -792,6 +810,82 @@ body.mbook-lock{overflow:hidden}
 <script>
 const reduce = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 const fine = window.matchMedia('(hover:hover) and (pointer:fine)').matches;
+
+/* ===== Ambient piano music (generative, Web Audio, no audio file) ===== */
+(function(){
+  var btn=document.getElementById('musicToggle'); if(!btn)return;
+  var ctx,master,wet,started=false;
+  var muted = localStorage.getItem('sakapulo-music')==='off';
+  var TARGET=0.12;
+  function setBtnState(){
+    btn.classList.toggle('muted',muted);
+    btn.setAttribute('aria-pressed',(!muted).toString());
+    btn.setAttribute('aria-label',muted?'Putar musik':'Matikan musik');
+  }
+  setBtnState();
+
+  var CHORDS=[
+    [261.63,329.63,392.00,493.88,587.33], // Cmaj9
+    [220.00,261.63,329.63,392.00],        // Am7
+    [174.61,220.00,261.63,329.63],        // Fmaj7
+    [196.00,246.94,293.66,349.23]         // G7
+  ];
+  var ci=0, ni=0, timer=null;
+
+  function playNote(freq,time,dur,vel){
+    var o1=ctx.createOscillator(),o2=ctx.createOscillator();
+    o1.type='triangle';o2.type='sine';
+    o1.frequency.value=freq;o2.frequency.value=freq*2;
+    var g=ctx.createGain(),g2=ctx.createGain();
+    g2.gain.value=.16;
+    o2.connect(g2);g2.connect(g);
+    o1.connect(g);
+    g.gain.setValueAtTime(0,time);
+    g.gain.linearRampToValueAtTime(vel,time+.02);
+    g.gain.exponentialRampToValueAtTime(.0001,time+dur);
+    g.connect(master);
+    o1.start(time);o2.start(time);
+    o1.stop(time+dur+.1);o2.stop(time+dur+.1);
+  }
+  function tick(){
+    var chord=CHORDS[ci];
+    var freq=chord[ni%chord.length];
+    playNote(freq,ctx.currentTime,2.4,.22);
+    ni++;
+    if(ni>=chord.length+1){ni=0;ci=(ci+1)%CHORDS.length;}
+  }
+  function build(){
+    ctx=new (window.AudioContext||window.webkitAudioContext)();
+    master=ctx.createGain();master.gain.value=0;
+    var delay=ctx.createDelay();delay.delayTime.value=.34;
+    var fb=ctx.createGain();fb.gain.value=.34;
+    var lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2200;
+    wet=ctx.createGain();wet.gain.value=.55;
+    master.connect(ctx.destination);
+    master.connect(delay);delay.connect(lp);lp.connect(fb);fb.connect(delay);delay.connect(wet);wet.connect(ctx.destination);
+  }
+  function ensureStarted(){
+    if(started)return; started=true;
+    build();
+    timer=setInterval(tick,1450); tick();
+    if(!muted)master.gain.linearRampToValueAtTime(TARGET,ctx.currentTime+1.6);
+  }
+  function applyMute(){
+    if(!started){ if(!muted)ensureStarted(); return; }
+    var now=ctx.currentTime;
+    master.gain.cancelScheduledValues(now);
+    master.gain.setValueAtTime(master.gain.value,now);
+    master.gain.linearRampToValueAtTime(muted?0:TARGET,now+.8);
+  }
+  ['pointerdown','touchstart','keydown'].forEach(function(ev){
+    addEventListener(ev,function unlock(){ if(!muted)ensureStarted(); },{once:true,passive:true});
+  });
+  btn.addEventListener('click',function(){
+    muted=!muted;
+    localStorage.setItem('sakapulo-music',muted?'off':'on');
+    setBtnState(); applyMute();
+  });
+})();
 
 const MENU=[
 {id:'starter',label:'Starter',groups:[{items:[
