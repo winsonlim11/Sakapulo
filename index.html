@@ -365,8 +365,8 @@ h1,h2,.hcard-meta h3{text-wrap:balance}
 .reviews-head h2{font-family:var(--display);font-weight:300;font-size:clamp(2rem,4.6vw,3.4rem);line-height:1.04;margin:.4rem 0 .9rem;font-variation-settings:"opsz" 144}
 .reviews-head h2 em{font-style:italic;color:var(--copper-2)}
 .reviews-head > p{color:var(--cream-dim)}
-.reviews-marquee{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
-.reviews-track{display:flex;gap:clamp(1rem,1.6vw,1.4rem);width:max-content;animation:revscroll 75s linear infinite}
+.reviews-marquee{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);transform:translateZ(0)}
+.reviews-track{display:flex;gap:clamp(1rem,1.6vw,1.4rem);width:max-content;animation:revscroll 75s linear infinite;will-change:transform}
 .reviews-marquee:hover .reviews-track{animation-play-state:paused}
 @keyframes revscroll{to{transform:translateX(-50%)}}
 @media(prefers-reduced-motion:reduce){.reviews-track{animation:none}.reviews-marquee{overflow-x:auto}}
