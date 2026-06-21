@@ -90,8 +90,9 @@ nav.solid{background:rgba(11,9,8,.72);backdrop-filter:blur(14px) saturate(140%);
 .hero-logo{width:clamp(86px,11vw,128px);height:clamp(86px,11vw,128px);border-radius:50%;margin-bottom:2.2rem;opacity:0;transform:scale(.78);box-shadow:0 0 60px rgba(228,174,112,.18);border:1px solid var(--line)}
 .hero-eyebrow{display:flex;align-items:center;gap:1rem;margin-bottom:1.4rem;font-size:.76rem;letter-spacing:.32em;text-transform:uppercase;color:var(--copper);opacity:0;transform:translateY(20px)}
 .hero-eyebrow span{height:1px;width:46px;background:var(--copper);display:inline-block;transform-origin:left;transform:scaleX(0)}
-.hero h1{font-family:var(--display);font-weight:300;line-height:.92;font-size:clamp(2.7rem,8.5vw,6.8rem);letter-spacing:-.02em}
-.hero h1 .line{display:block;overflow:hidden}
+.hero h1{font-family:var(--display);font-weight:300;line-height:.92;font-size:clamp(2.7rem,8.5vw,6.8rem);letter-spacing:-.02em;display:flex;align-items:flex-end;flex-wrap:wrap}
+.hero h1 .line{display:inline-block;overflow:hidden}
+.hero h1 .line+.line{margin-left:.07em;transform:rotate(-9deg);transform-origin:left bottom}
 .hero h1 .line > span{display:block;transform:translateY(110%)}
 .hero h1 em{font-style:italic;font-weight:400;color:var(--copper-2)}
 .hero-sub{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:2rem;margin-top:2.6rem;max-width:1300px}
@@ -203,6 +204,21 @@ nav.solid{background:rgba(11,9,8,.72);backdrop-filter:blur(14px) saturate(140%);
 .info-block .v{color:var(--cream-dim);font-size:1.02rem;line-height:1.55}
 .info-block .v strong{color:var(--cream);font-weight:500}
 @media(max-width:860px){.visit-inner{grid-template-columns:1fr}}
+
+.feedback{position:relative;overflow:hidden}
+.feedback::before{content:"";position:absolute;inset:0;background:radial-gradient(110% 80% at 20% 0%,rgba(122,59,30,.32),transparent 55%)}
+.feedback-inner{position:relative;z-index:2;max-width:660px;margin:0 auto;text-align:center}
+.feedback-inner h2{font-family:var(--display);font-weight:300;font-size:clamp(2rem,4.6vw,3.4rem);line-height:1.08;letter-spacing:-.02em;font-variation-settings:"opsz" 144}
+.feedback-inner h2 em{font-style:italic;color:var(--copper-2)}
+.feedback-inner>p:not(.eyebrow){color:var(--cream-dim);margin-top:1.1rem;font-size:1.02rem;line-height:1.6}
+.feedback-form{margin-top:2.2rem;display:flex;flex-direction:column;align-items:center;gap:1rem;text-align:left}
+.ff-row{width:100%}
+.ff-row input,.ff-row textarea{width:100%;background:var(--ink-soft);border:1px solid var(--line);border-radius:12px;padding:.95rem 1.1rem;color:var(--cream);font-family:var(--body);font-size:.96rem;transition:border-color .3s,background .3s}
+.ff-row textarea{resize:vertical;min-height:120px}
+.ff-row input::placeholder,.ff-row textarea::placeholder{color:var(--muted)}
+.ff-row input:focus,.ff-row textarea:focus{outline:none;border-color:var(--copper);background:var(--ink-raise)}
+.feedback-form button.visit-cta{appearance:none;-webkit-appearance:none;background:transparent;font:inherit;cursor:pointer}
+@media(max-width:760px){.feedback-form button.visit-cta{width:100%;justify-content:center}}
 
 footer{padding:clamp(3rem,6vw,5rem) var(--pad) 2.5rem;border-top:1px solid var(--line-soft)}
 .foot-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:2rem}
@@ -476,6 +492,7 @@ body.mbook-lock{overflow:hidden}
     <a href="#menu">Menu</a>
     <a href="#ruang">Ruang</a>
     <a href="#visit">Kunjungi</a>
+    <a href="#feedback">Saran</a>
   </div>
   <a href="https://wa.me/62812797979?text=Halo%20Sakapulo%2C%20saya%20mau%20reservasi%20a.n%20______%20untuk%20______%20orang%2C%20tanggal%20______%20jam%20______.%20Terima%20kasih%21" target="_blank" rel="noopener" class="nav-cta">Reservasi</a>
 </nav>
@@ -759,6 +776,23 @@ body.mbook-lock{overflow:hidden}
   </div>
 </section>
 
+<section class="section feedback" id="feedback">
+  <div class="feedback-inner">
+    <p class="eyebrow reveal" style="justify-content:center">Suara Anda</p>
+    <h2 class="reveal d1">Kritik &amp; saran untuk <em>kami</em>.</h2>
+    <p class="reveal d2">Setiap cerita Anda membuat Sakapulo lebih baik. Tulis kritik atau saran di bawah, lalu kirim langsung ke WhatsApp kami.</p>
+    <form class="feedback-form reveal d2" id="feedbackForm">
+      <div class="ff-row">
+        <input type="text" id="ffName" name="name" placeholder="Nama Anda (opsional)" autocomplete="name">
+      </div>
+      <div class="ff-row">
+        <textarea id="ffMessage" name="message" placeholder="Tulis kritik atau saran Anda di sini..." rows="4" required></textarea>
+      </div>
+      <button type="submit" class="visit-cta"><span>Kirim ke WhatsApp</span></button>
+    </form>
+  </div>
+</section>
+
 <footer>
   <div class="foot-top">
     <div class="foot-brand">
@@ -987,6 +1021,22 @@ document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
     words.forEach(function(w,i){w.classList.toggle('lit',i<n);});
   };
   addEventListener('scroll',lite,{passive:true});lite();
+})();
+
+(function(){
+  const form=document.getElementById('feedbackForm');
+  if(!form) return;
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    const name=document.getElementById('ffName').value.trim();
+    const message=document.getElementById('ffMessage').value.trim();
+    if(!message) return;
+    let text='Halo Sakapulo, saya mau memberikan kritik & saran';
+    text+=name?' (dari '+name+')':'';
+    text+=':\n'+message;
+    window.open('https://wa.me/62812797979?text='+encodeURIComponent(text),'_blank');
+    form.reset();
+  });
 })();
 
 if(fine){
